@@ -11,9 +11,8 @@ trait SettingsTrait
     protected $_settings = [];
     protected $_settingsLoaded = false;
 
-    public function getSetting(string $ident): ?Setting
+    public function getSetting(string $ident)
     {
-        //load settings once
         $this->_loadSettings();
 
         if (isset($this->_settings[$ident])) {
@@ -23,21 +22,15 @@ trait SettingsTrait
         return null;
     }
 
-    protected function _loadSettings()
+    protected function _loadSettings(): void
     {
         if ($this->_settingsLoaded) {
             return;
         }
-        foreach (new Setting($this->db) as $m) {
-            $this->_settings[$m->get('ident')] = $m->get('value');
+        foreach (new Setting(isset($this->db) ? $this->db : $this->persistence) as $setting) {
+            $this->_settings[$setting->get('ident')] = $setting->get('value');
         }
         $this->_settingsLoaded = true;
-    }
-
-    public function unloadSettings()
-    {
-        $this->_settings = [];
-        $this->_settingsLoaded = false;
     }
 
     /**
@@ -65,22 +58,12 @@ trait SettingsTrait
     /**
      * For "installers": Add a setting if it does not exist yet
      */
-    public function addSetting(Setting $s)
+    public function addSetting(Setting $setting): void
     {
         $this->_loadSettings();
-        if (!array_key_exists($s->get('ident'), $this->_settings)) {
-            $s->save();
+        if (!array_key_exists($setting->get('ident'), $this->_settings)) {
+            $setting->save();
             $this->_settingsLoaded = false;
         }
-    }
-
-    /**
-     * Can be used to overwrite a setting, mostly for tests
-     */
-    public function setSetting(Setting $s)
-    {
-        $s->save();
-        $this->_settingsLoaded = false;
-        $this->_loadSettings();
     }
 }

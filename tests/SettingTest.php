@@ -7,12 +7,19 @@ namespace settingsforatk\tests;
 use atk4\data\Exception;
 use settingsforatk\Setting;
 use settingsforatk\SettingGroup;
-use traitsforatkdata\tests\TestCase;
+use traitsforatkdata\TestCase;
 use settingsforatk\UserException;
 
 
 class SettingTest extends TestCase
 {
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+        if (!defined('ENCRYPTFIELD_KEY')) {
+            define('ENCRYPTFIELD_KEY', '12003456789abcdef123456789abcdef');
+        }
+    }
 
     protected $sqlitePersistenceModels = [
         Setting::class,

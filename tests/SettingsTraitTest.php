@@ -7,10 +7,17 @@ namespace settingsforatk\tests;
 use settingsforatk\Setting;
 use settingsforatk\SettingGroup;
 use settingsforatk\tests\testclasses\AppWithSettings;
-use traitsforatkdata\tests\TestCase;
+use traitsforatkdata\TestCase;
 
 class SettingsTraitTest extends TestCase
 {
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+        if(!defined('ENCRYPTFIELD_KEY')) {
+            define('ENCRYPTFIELD_KEY', '00123456789abcdef123456789abcdef');
+        }
+    }
 
     protected $sqlitePersistenceModels = [
         Setting::class,
@@ -19,27 +26,26 @@ class SettingsTraitTest extends TestCase
 
     public function testAddSettingTwiceOnlyAddsOne()
     {
-        $persistence = $this->getSqliteTestPersistence();
-        $app = new AppWithSettings();
-        $initialCount = (new Setting($persistence))->action('count')->getOne();
-        $setting = new Setting($persistence);
+        $app = $this->getAppWithSettingsAndDb();
+        $initialCount = (new Setting($app->db))->action('count')->getOne();
+        $setting = new Setting($app->db);
         $setting->set('ident', 'LALADU');
         $app->addSetting($setting);
         self::assertEquals(
             $initialCount + 1,
-            (new Setting($persistence))->action('count')->getOne()
+            (new Setting($app->db))->action('count')->getOne()
         );
         $app->addSetting($setting);
         self::assertEquals(
             $initialCount + 1,
-            (new Setting($persistence))->action('count')->getOne()
+            (new Setting($app->db))->action('count')->getOne()
         );
     }
 
     public function testSettingsAreLoadedIfNot()
     {
-        $app = new AppWithSettings();
-        $setting = new Setting($this->getSqliteTestPersistence());
+        $app = $this->getAppWithSettingsAndDb();
+        $setting = new Setting($app->db);
         $setting->set('ident', 'RERERERE');
         $setting->set('value', 'PIRIDI');
 
@@ -52,31 +58,14 @@ class SettingsTraitTest extends TestCase
 
     public function testGetNonExistantSetting()
     {
-        $app = new AppWithSettings();
+        $app = $this->getAppWithSettingsAndDb();
         self::assertNull($app->getSetting('SOMENONEXISTANTSETTING'));
-    }
-
-    public function testUnloadSettings()
-    {
-        $app = new AppWithSettings();
-        $app->getSetting('LALA');
-
-        self::assertThat(
-            $app,
-            self::attributeEqualTo('_settingsLoaded', true)
-        );
-
-        $app->unloadSettings();
-        self::assertThat(
-            $app,
-            self::attributeEqualTo('_settingsLoaded', false)
-        );
     }
 
     public function testSettingExists()
     {
-        $app = new AppWithSettings();
-        $setting = new Setting($this->getSqliteTestPersistence());
+        $app = $this->getAppWithSettingsAndDb();
+        $setting = new Setting($app->db);
         $setting->set('ident', 'SOMEEXISTINGSETTING');
         $setting->set('value', 'HALLOHALLO');
         $app->addSetting($setting);
@@ -86,14 +75,14 @@ class SettingsTraitTest extends TestCase
     
     public function testGetSTDSettings()
     {
-        $app = new AppWithSettings();
+        $app = $this->getAppWithSettingsAndDb();
         
-        $setting = new Setting($this->getSqliteTestPersistence());
+        $setting = new Setting($app->db);
         $setting->set('ident', 'STD_NAME');
         $setting->set('value', 'HALLOHALLO');
         $app->addSetting($setting);
         
-        $setting = new Setting($this->getSqliteTestPersistence());
+        $setting = new Setting($app->db);
         $setting->set('ident', 'SOMENONSTDSETTING');
         $setting->set('value', 'PIRIDA');
         $app->addSetting($setting);
@@ -102,19 +91,12 @@ class SettingsTraitTest extends TestCase
         self::assertArrayHasKey('STD_NAME', $std);
         self::assertArrayNotHasKey('SOMENONSTDSETTING', $std);
     }
-    
-    public function testSetSetting()
-    {
+
+    protected function getAppWithSettingsAndDb(): AppWithSettings {
+        $persistence = $this->getSqliteTestPersistence();
         $app = new AppWithSettings();
-        
-        $setting = new Setting($this->getSqliteTestPersistence());
-        $setting->set('ident', 'STD_NAME');
-        $setting->set('value', 'HALLOHALLOHALLOHALLO');
-        $app->setSetting($setting);
-        
-        self::assertEquals(
-            'HALLOHALLOHALLOHALLO', 
-            $app->getSetting('STD_NAME')
-        );
+        $app->db = $persistence;
+
+        return $app;
     }
 }
