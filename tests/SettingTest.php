@@ -8,7 +8,6 @@ use atk4\data\Exception;
 use settingsforatk\Setting;
 use settingsforatk\SettingGroup;
 use traitsforatkdata\TestCase;
-use settingsforatk\UserException;
 
 
 class SettingTest extends TestCase
@@ -28,20 +27,30 @@ class SettingTest extends TestCase
 
     public function testSystemSettingNotDeletable()
     {
-        $s = new Setting($this->getSqliteTestPersistence());
-        $s->set('system', 1);
-        $s->save();
-        $this->expectException(UserException::class);
-        $s->delete();
+        $setting = new Setting($this->getSqliteTestPersistence());
+        $setting->set('system', 1);
+        $setting->save();
+        $this->expectException(Exception::class);
+        $setting->delete();
+    }
+    
+    public function testExceptionClassCanBeDefined()
+    {
+        $setting = new Setting($this->getSqliteTestPersistence());
+        $setting->set('system', 1);
+        $setting->exceptionClassForUserMessageInSetting = \PHPUnit\Util\Exception::class;
+        $setting->save();
+        $this->expectException(\PHPUnit\Util\Exception::class);
+        $setting->delete();
     }
 
     public function testSystemSettingIdentNotEditable()
     {
-        $s = new Setting($this->getSqliteTestPersistence());
-        $s->set('system', 1);
-        $s->set('ident', 'SOMEIDENT');
-        $s->save();
+        $setting = new Setting($this->getSqliteTestPersistence());
+        $setting->set('system', 1);
+        $setting->set('ident', 'SOMEIDENT');
+        $setting->save();
         $this->expectException(Exception::class);
-        $s->set('ident', 'SOMEOTHERIDENT');
+        $setting->set('ident', 'SOMEOTHERIDENT');
     }
 }

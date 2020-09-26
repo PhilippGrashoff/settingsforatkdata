@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace settingsforatk;
 
+use atk4\data\Exception;
 use traitsforatkdata\CreatedDateAndLastUpdatedTrait;
 use traitsforatkdata\EncryptedFieldTrait;
 use atk4\data\Model;
@@ -16,6 +17,8 @@ class Setting extends Model
     use CreatedDateAndLastUpdatedTrait;
 
     public $table = 'setting';
+
+    public $exceptionClassForUserMessageInSetting = Exception::class;
 
 
     public function init(): void
@@ -86,7 +89,7 @@ class Setting extends Model
             Model::HOOK_BEFORE_DELETE,
             function (Model $model) {
                 if ($model->get('system')) {
-                    throw new UserException(
+                    throw new $this->exceptionClassForUserMessageInSetting(
                         'Diese Einstellung ist eine Systemeinstellung und kann nicht gelöscht werden.'
                     );
                 }
