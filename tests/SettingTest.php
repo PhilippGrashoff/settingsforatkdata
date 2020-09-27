@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace settingsforatk\tests;
 
 use atk4\data\Exception;
+use traitsforatkdata\UserException;
 use settingsforatk\Setting;
 use settingsforatk\SettingGroup;
 use traitsforatkdata\TestCase;
@@ -30,17 +31,7 @@ class SettingTest extends TestCase
         $setting = new Setting($this->getSqliteTestPersistence());
         $setting->set('system', 1);
         $setting->save();
-        $this->expectException(Exception::class);
-        $setting->delete();
-    }
-    
-    public function testExceptionClassCanBeDefined()
-    {
-        $setting = new Setting($this->getSqliteTestPersistence());
-        $setting->set('system', 1);
-        $setting->exceptionClassForUserMessageInSetting = \PHPUnit\Util\Exception::class;
-        $setting->save();
-        $this->expectException(\PHPUnit\Util\Exception::class);
+        $this->expectException(UserException::class);
         $setting->delete();
     }
 
