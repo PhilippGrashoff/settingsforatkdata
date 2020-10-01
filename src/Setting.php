@@ -19,7 +19,7 @@ class Setting extends Model
     public $table = 'setting';
 
 
-    public function init(): void
+    protected function init(): void
     {
         parent::init();
 

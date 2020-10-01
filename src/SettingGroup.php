@@ -16,7 +16,7 @@ class SettingGroup extends Model
     public $table = 'setting_group';
 
 
-    public function init(): void
+    protected function init(): void
     {
         parent::init();
 
