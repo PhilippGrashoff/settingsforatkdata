@@ -85,7 +85,7 @@ class Setting extends Model
         //system settings cannot be deleted
         $this->onHook(
             Model::HOOK_BEFORE_DELETE,
-            function (Model $model) {
+            function (self $model) {
                 if ($model->get('system')) {
                     throw new UserException(
                         'Diese Einstellung ist eine Systemeinstellung und kann nicht gelöscht werden.'
@@ -97,7 +97,7 @@ class Setting extends Model
         //ident of system setting cannot be edited if set
         $this->onHook(
             Model::HOOK_AFTER_LOAD,
-            function (Model $model) {
+            function (self $model) {
                 if (
                     $model->get('system')
                     && $model->get('ident')
