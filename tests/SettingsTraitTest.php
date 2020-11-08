@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace settingsforatk\tests;
 
+use atk4\data\Exception;
 use settingsforatk\Setting;
 use settingsforatk\SettingGroup;
 use settingsforatk\tests\testclasses\AppWithSettings;
@@ -28,14 +29,12 @@ class SettingsTraitTest extends TestCase
     {
         $app = $this->getAppWithSettingsAndDb();
         $initialCount = (new Setting($app->db))->action('count')->getOne();
-        $setting = new Setting($app->db);
-        $setting->set('ident', 'LALADU');
-        $app->addSetting($setting);
+        $app->addSetting('LALADU', 'Somevalue');
         self::assertEquals(
             $initialCount + 1,
             (new Setting($app->db))->action('count')->getOne()
         );
-        $app->addSetting($setting);
+        $app->addSetting('LALADU', 'Somevalue');
         self::assertEquals(
             $initialCount + 1,
             (new Setting($app->db))->action('count')->getOne()
@@ -45,11 +44,7 @@ class SettingsTraitTest extends TestCase
     public function testSettingsAreLoadedIfNot()
     {
         $app = $this->getAppWithSettingsAndDb();
-        $setting = new Setting($app->db);
-        $setting->set('ident', 'RERERERE');
-        $setting->set('value', 'PIRIDI');
-
-        $app->addSetting($setting);
+        $app->addSetting('RERERERE', 'PIRIDI');
         self::assertEquals(
             'PIRIDI',
             $app->getSetting('RERERERE')
@@ -65,10 +60,7 @@ class SettingsTraitTest extends TestCase
     public function testSettingExists()
     {
         $app = $this->getAppWithSettingsAndDb();
-        $setting = new Setting($app->db);
-        $setting->set('ident', 'SOMEEXISTINGSETTING');
-        $setting->set('value', 'HALLOHALLO');
-        $app->addSetting($setting);
+        $app->addSetting('SOMEEXISTINGSETTING', 'HALLOHALLO');
         self::assertTrue($app->settingExists('SOMEEXISTINGSETTING'));
         self::assertFalse($app->settingExists('SOMEOTHERNONEXISTINGSETTING'));
     }
@@ -76,20 +68,33 @@ class SettingsTraitTest extends TestCase
     public function testGetSTDSettings()
     {
         $app = $this->getAppWithSettingsAndDb();
-        
-        $setting = new Setting($app->db);
-        $setting->set('ident', 'STD_NAME');
-        $setting->set('value', 'HALLOHALLO');
-        $app->addSetting($setting);
-        
-        $setting = new Setting($app->db);
-        $setting->set('ident', 'SOMENONSTDSETTING');
-        $setting->set('value', 'PIRIDA');
-        $app->addSetting($setting);
+        $app->addSetting('STD_NAME', 'HALLOHALLO');
+        $app->addSetting('SOMENONSTDSETTING', 'PIRIDA');
         
         $std = $app->getAllSTDSettings();
         self::assertArrayHasKey('STD_NAME', $std);
         self::assertArrayNotHasKey('SOMENONSTDSETTING', $std);
+    }
+
+    public function testUpdateSetting() {
+        $app = $this->getAppWithSettingsAndDb();
+        $app->addSetting('STD_NAME', 'HALLOHALLO');
+        self::assertEquals(
+            'HALLOHALLO',
+            $app->getSetting('STD_NAME')
+        );
+
+        $app->updateSetting('STD_NAME', 'GEGE');
+        self::assertEquals(
+            'GEGE',
+            $app->getSetting('STD_NAME')
+        );
+    }
+
+    public function testUpdateSettingExceptionSettingNotExists() {
+        $app = $this->getAppWithSettingsAndDb();
+        self::expectException(Exception::class);
+        $app->updateSetting('SOMENONEXISTANT', 'FDF');
     }
 
     protected function getAppWithSettingsAndDb(): AppWithSettings {

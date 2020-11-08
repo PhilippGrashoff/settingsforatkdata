@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace settingsforatk;
 
 
+use atk4\data\Exception;
+
 trait SettingsTrait
 {
 
@@ -58,12 +60,30 @@ trait SettingsTrait
     /**
      * For "installers": Add a setting if it does not exist yet
      */
-    public function addSetting(Setting $setting): void
+    public function addSetting(string $ident, $value): void
     {
         $this->_loadSettings();
-        if (!array_key_exists($setting->get('ident'), $this->_settings)) {
+        if (!array_key_exists($ident, $this->_settings)) {
+            $setting = new Setting(isset($this->db) ? $this->db : $this->persistence);
+            $setting->set('ident', $ident);
+            $setting->set('value', $value);
             $setting->save();
             $this->_settingsLoaded = false;
         }
+    }
+
+    public function updateSetting(string $ident, $value): Setting {
+        $this->_loadSettings();
+        if (!array_key_exists($ident, $this->_settings)) {
+            throw new Exception('Setting ' . $ident . ' not found!');
+        }
+
+        $setting = new Setting(isset($this->db) ? $this->db : $this->persistence);
+        $setting->loadBy('ident', $ident);
+        $setting->set('value', $value);
+        $setting->save();
+        $this->_settingsLoaded = false;
+
+        return $setting;
     }
 }
