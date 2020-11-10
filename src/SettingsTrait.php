@@ -29,6 +29,7 @@ trait SettingsTrait
         if ($this->_settingsLoaded) {
             return;
         }
+        $this->_settings = [];
         foreach (new Setting(isset($this->db) ? $this->db : $this->persistence) as $setting) {
             $this->_settings[$setting->get('ident')] = $setting->get('value');
         }
@@ -85,5 +86,9 @@ trait SettingsTrait
         $this->_settingsLoaded = false;
 
         return $setting;
+    }
+
+    public function reloadSettings(): void {
+        $this->_settingsLoaded = false;
     }
 }

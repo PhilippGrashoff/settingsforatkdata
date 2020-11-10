@@ -91,6 +91,21 @@ class SettingsTraitTest extends TestCase
         );
     }
 
+    public function testReloadOfSettingsEmptiesSettingsArray() {
+        $app = $this->getAppWithSettingsAndDb();
+        $app->addSetting('STD_NAME', 'HALLOHALLO');
+        self::assertTrue($app->settingExists('STD_NAME'));
+        $setting = new Setting($app->db);
+        $setting->loadBy('ident', 'STD_NAME');
+        $setting->delete();
+        self::assertTrue($app->settingExists('STD_NAME'));
+        $app->reloadSettings();
+        self::assertFalse($app->settingExists('STD_NAME'));
+    }
+
+
+
+
     public function testUpdateSettingExceptionSettingNotExists() {
         $app = $this->getAppWithSettingsAndDb();
         self::expectException(Exception::class);
