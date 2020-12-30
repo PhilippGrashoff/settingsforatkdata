@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace settingsforatk;
 
+use atk4\data\Exception;
+use atk4\ui\Form\Control\Dropdown;
 use traitsforatkdata\UserException;
 use traitsforatkdata\CreatedDateAndLastUpdatedTrait;
-use traitsforatkdata\EncryptedFieldTrait;
 use atk4\data\Model;
 
 
 class Setting extends Model
 {
 
-    use EncryptedFieldTrait;
     use CreatedDateAndLastUpdatedTrait;
 
     public $table = 'setting';
@@ -47,11 +47,23 @@ class Setting extends Model
                     'system' => true
                 ],
                 [
+                    'encrypt_value',
+                    'type' => 'integer',
+                    'values' => [0 => 'Nein', 1 => 'Ja'],
+                    'caption' => 'Wert verschlüsselt speichern',
+                    'ui' => ['form' => [Dropdown::class]]
+                ],
+                [
                     'value',
                     'type' => 'string',
-                    'system' => true, //system = true to prevent audit logging field value
+                    'system' => true,
                     'caption' => 'Wert',
                     'ui' => ['editable' => true]
+                ],
+                [
+                    'hidden',
+                    'type' => 'integer',
+                    'system' => true,
                 ],
             ]
         );
@@ -79,9 +91,6 @@ class Setting extends Model
                 ]
             );
 
-        //encrypt value field in case sensitive data is stored in there
-        $this->encryptField($this->getField('value'), ENCRYPTFIELD_KEY);
-
         //system settings cannot be deleted
         $this->onHook(
             Model::HOOK_BEFORE_DELETE,
@@ -106,5 +115,57 @@ class Setting extends Model
                 }
             }
         );
+
+        $this->onHook(
+            Model::HOOK_AFTER_LOAD,
+            function (self $model) {
+                if($model->get('encrypt_value')) {
+                    $model->decryptValue();
+                }
+            },
+            [],
+            1
+        );
+
+        $this->onHook(
+            Model::HOOK_BEFORE_SAVE,
+            function (self $model) {
+                if($model->get('encrypt_value')) {
+                    $model->encryptValue();
+                }
+            },
+            [],
+            999
+        );
+    }
+
+    protected function decryptValue() {
+        $key = ENCRYPTFIELD_KEY;
+        $decoded = base64_decode($this->get('value'));
+        if (mb_strlen($decoded, '8bit') < (SODIUM_CRYPTO_SECRETBOX_NONCEBYTES + SODIUM_CRYPTO_SECRETBOX_MACBYTES)) {
+            throw new Exception('An error occurred decrypting the field value');  //@codeCoverageIgnore
+        }
+        $nonce = mb_substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit');
+        $ciphertext = mb_substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, null, '8bit');
+
+        $plain = sodium_crypto_secretbox_open($ciphertext, $nonce, $key);
+        if ($plain === false) {
+            throw new Exception('An error occurred decrypting the field value');  //@codeCoverageIgnore
+        }
+        sodium_memzero($ciphertext);
+        sodium_memzero($key);
+
+        $this->set('value', $plain);
+    }
+
+    protected function encryptValue() {
+        //sodium needs string
+        $key = ENCRYPTFIELD_KEY;
+        $value = (string)$this->get('value');
+        $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        $cipher = base64_encode($nonce . sodium_crypto_secretbox($value, $nonce, $key));
+        sodium_memzero($value);
+        sodium_memzero($key);
+        $this->set('value', $cipher);
     }
 }

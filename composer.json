@@ -10,7 +10,9 @@
   "require":{
     "atk4/data": "2.3.*",
     "atk4/core": "2.3.*",
-    "philippgrashoff/traitsforatkdata": "master"
+    "philippgrashoff/traitsforatkdata": "master",
+    "ext-sodium": "*",
+    "ext-mbstring": "*"
   },
   "require-dev": {
     "phpunit/phpunit": ">8"
