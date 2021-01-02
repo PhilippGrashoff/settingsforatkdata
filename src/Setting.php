@@ -141,7 +141,7 @@ class Setting extends Model
             return;
         }
         $key = ENCRYPTFIELD_KEY;
-        $decoded = base64_decode($this->get('value'));
+        $decoded = base64_decode((string)$this->get('value'));
         if (mb_strlen($decoded, '8bit') < (SODIUM_CRYPTO_SECRETBOX_NONCEBYTES + SODIUM_CRYPTO_SECRETBOX_MACBYTES)) {
             throw new Exception('An error occurred decrypting the field value');  //@codeCoverageIgnore
         }
