@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace settingsforatk;
 
 use atk4\data\Exception;
-use atk4\ui\Form\Control\Dropdown;
-use traitsforatkdata\UserException;
-use traitsforatkdata\CreatedDateAndLastUpdatedTrait;
 use atk4\data\Model;
+use atk4\ui\Form\Control\Dropdown;
+use traitsforatkdata\CreatedDateAndLastUpdatedTrait;
+use traitsforatkdata\UserException;
 
 
 class Setting extends Model
@@ -119,9 +119,7 @@ class Setting extends Model
         $this->onHook(
             Model::HOOK_AFTER_LOAD,
             function (self $model) {
-                if($model->get('encrypt_value')) {
-                    $model->decryptValue();
-                }
+                $model->decryptValue();
             },
             [],
             1
@@ -130,16 +128,18 @@ class Setting extends Model
         $this->onHook(
             Model::HOOK_BEFORE_SAVE,
             function (self $model) {
-                if($model->get('encrypt_value')) {
-                    $model->encryptValue();
-                }
+                $model->encryptValue();
             },
             [],
             999
         );
     }
 
-    protected function decryptValue() {
+    protected function decryptValue(): void
+    {
+        if ($this->get('encrypt_value') === 0) {
+            return;
+        }
         $key = ENCRYPTFIELD_KEY;
         $decoded = base64_decode($this->get('value'));
         if (mb_strlen($decoded, '8bit') < (SODIUM_CRYPTO_SECRETBOX_NONCEBYTES + SODIUM_CRYPTO_SECRETBOX_MACBYTES)) {
@@ -158,7 +158,11 @@ class Setting extends Model
         $this->set('value', $plain);
     }
 
-    protected function encryptValue() {
+    protected function encryptValue()
+    {
+        if ($this->get('encrypt_value') === 0) {
+            return;
+        }
         //sodium needs string
         $key = ENCRYPTFIELD_KEY;
         $value = (string)$this->get('value');
