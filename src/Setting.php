@@ -55,7 +55,7 @@ class Setting extends Model
                 ],
                 [
                     'value',
-                    'type' => 'string',
+                    'type' => 'text',
                     'system' => true,
                     'caption' => 'Wert',
                     'ui' => ['editable' => true]
