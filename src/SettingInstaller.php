@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace settingsforatk;
 
-use atk4\data\Persistence;
+use Atk4\Data\Persistence;
 
 class SettingInstaller
 {

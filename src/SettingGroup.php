@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace settingsforatk;
 
-use atk4\data\Model;
+use Atk4\Data\Model;
 use traitsforatkdata\CreatedDateAndLastUpdatedTrait;
 
 
@@ -42,6 +42,6 @@ class SettingGroup extends Model
         $this->addCreatedDateAndLastUpdateFields();
         $this->addCreatedDateAndLastUpdatedHook();
 
-        $this->hasMany(Setting::class, [Setting::class]);
+        $this->hasMany(Setting::class, ['model' => [Setting::class]]);
     }
 }

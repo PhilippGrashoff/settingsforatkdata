@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace settingsforatk;
 
-use atk4\data\Exception;
-use atk4\data\Model;
-use atk4\ui\Form\Control\Dropdown;
+use Atk4\Data\Exception;
+use Atk4\Data\Model;
+use Atk4\Ui\Form\Control\Dropdown;
 use traitsforatkdata\CreatedDateAndLastUpdatedTrait;
 use traitsforatkdata\UserException;
 
@@ -74,7 +74,7 @@ class Setting extends Model
         $this->hasOne(
             'setting_group_id',
             [
-                SettingGroup::class,
+                'model' => [SettingGroup::class],
                 'type' => 'integer',
                 'system' => true,
                 'ui' => ['form' => ['DropDown']]

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace settingsforatk\tests\testclasses;
 
-use atk4\ui\App;
+use Atk4\Ui\App;
 use settingsforatk\SettingsTrait;
 
 class AppWithSettings extends App
