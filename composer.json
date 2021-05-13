@@ -10,7 +10,7 @@
   },
   "require": {
     "atk4/data": "2.3.6",
-    "philippgrashoff/traitsforatkdata": "master",
+    "philippgrashoff/traitsforatkdata": "2.3.*",
     "ext-sodium": "*",
     "ext-mbstring": "*"
   },
