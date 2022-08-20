@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace settingsforatk\tests;
 
-use atk4\data\Exception;
+use Atk4\Data\Exception;
 use settingsforatk\Setting;
 use settingsforatk\SettingGroup;
 use settingsforatk\tests\testclasses\AppWithSettings;

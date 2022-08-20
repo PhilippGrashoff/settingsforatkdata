@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace settingsforatk\tests\testclasses;
 
-use atk4\data\Model;
-use atk4\ui\Form\Control\Dropdown;
+use Atk4\Data\Model;
+use Atk4\Ui\Form\Control\Dropdown;
 
 class SettingWithoutEncryption extends Model
 {

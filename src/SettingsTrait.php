@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace settingsforatk;
 
 
-use atk4\data\Exception;
+use Atk4\Data\Exception;
 
 trait SettingsTrait
 {
