@@ -23,50 +23,63 @@ class Setting extends Model
     {
         parent::init();
 
-        $this->addFields(
+        $this->addField(
+            'ident',
             [
-                [
-                    'ident',
-                    'type' => 'string',
-                    'caption' => 'Schlüssel'
-                    ,
-                    'ui' => ['readonly' => true]
-                ],
-                [
-                    'name',
-                    'type' => 'string'
-                ],
-                [
-                    'description',
-                    'type' => 'text',
-                    'caption' => 'Beschreibung'
-                ],
-                [
-                    'system',
-                    'type' => 'integer',
-                    'system' => true
-                ],
-                [
-                    'encrypt_value',
-                    'type' => 'integer',
-                    'values' => [0 => 'Nein', 1 => 'Ja'],
-                    'caption' => 'Wert verschlüsselt speichern',
-                    'ui' => ['form' => [Dropdown::class]]
-                ],
-                [
-                    'value',
-                    'type' => 'text',
-                    'system' => true,
-                    'caption' => 'Wert',
-                    'ui' => ['editable' => true]
-                ],
-                [
-                    'hidden',
-                    'type' => 'integer',
-                    'system' => true,
-                ],
+                'type' => 'string',
+                'caption' => 'Schlüssel'
+                ,
+                'ui' => ['readonly' => true]
             ]
         );
+        $this->addField(
+            'name',
+            [
+                'type' => 'string'
+            ]
+        );
+        $this->addField(
+            'description',
+            [
+                'type' => 'text',
+                'caption' => 'Beschreibung'
+            ]
+        );
+        $this->addField(
+
+            'system',
+            [
+                'type' => 'integer',
+                'system' => true
+            ]
+        );
+        $this->addField(
+            'encrypt_value',
+            [
+                'type' => 'integer',
+                'values' => [0 => 'Nein', 1 => 'Ja'],
+                'default' => 0,
+                'caption' => 'Wert verschlüsselt speichern',
+                'ui' => ['form' => [Dropdown::class]]
+            ]
+        );
+        $this->addField(
+            'value',
+            [
+                'type' => 'text',
+                'system' => true,
+                'caption' => 'Wert',
+                'ui' => ['editable' => true]
+            ]
+        );
+        $this->addField(
+            'hidden',
+            [
+                'type' => 'integer',
+                'system' => true,
+            ]
+        );
+
 
         $this->addCreatedDateAndLastUpdateFields();
         $this->addCreatedDateAndLastUpdatedHook();
@@ -137,7 +150,7 @@ class Setting extends Model
 
     protected function decryptValue(): void
     {
-        if ($this->get('encrypt_value') === 0) {
+        if ($this->get('encrypt_value') !== 1) {
             return;
         }
         $key = ENCRYPTFIELD_KEY;
