@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace settingsforatk;
+namespace PhilippR\Atk4\Settings;
 
 use Atk4\Data\Persistence;
 
 class SettingInstaller
 {
 
-    protected $persistence;
+    protected Persistence $persistence;
 
-    public $stdSystem = 1;
+    protected int $stdSystem = 1;
 
-    public $stdEncryptValue = 0;
+    protected int $stdEncryptValue = 0;
 
-    public $stdHidden = 0;
+    protected int $stdHidden = 0;
 
 
     public function __construct(Persistence $persistence)

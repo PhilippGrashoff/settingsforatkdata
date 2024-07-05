@@ -2,13 +2,11 @@
 
 declare(strict_types=1);
 
-namespace settingsforatk;
+namespace PhilippR\Atk4\Settings;
 
 use Atk4\Data\Exception;
 use Atk4\Data\Model;
-use Atk4\Ui\Form\Control\Dropdown;
-use traitsforatkdata\CreatedDateAndLastUpdatedTrait;
-use traitsforatkdata\UserException;
+use PhilippR\Atk4\ModelTraits\CreatedDateAndLastUpdatedTrait;
 
 
 class Setting extends Model
@@ -27,24 +25,23 @@ class Setting extends Model
             'ident',
             [
                 'type' => 'string',
-                'caption' => 'Schlüssel'
-                ,
-                'ui' => ['readonly' => true]
             ]
         );
+
         $this->addField(
             'name',
             [
                 'type' => 'string'
             ]
         );
+
         $this->addField(
             'description',
             [
                 'type' => 'text',
-                'caption' => 'Beschreibung'
             ]
         );
+
         $this->addField(
 
             'system',
@@ -53,44 +50,39 @@ class Setting extends Model
                 'system' => true
             ]
         );
+
         $this->addField(
             'encrypt_value',
             [
-                'type' => 'integer',
-                'values' => [0 => 'Nein', 1 => 'Ja'],
-                'default' => 0,
-                'caption' => 'Wert verschlüsselt speichern',
-                'ui' => ['form' => [Dropdown::class]]
+                'type' => 'boolean',
+                'default' => false,
+                'caption' => 'Save value encrypted',
             ]
         );
+
         $this->addField(
             'value',
             [
                 'type' => 'text',
-                'system' => true,
-                'caption' => 'Wert',
-                'ui' => ['editable' => true]
             ]
         );
+
         $this->addField(
             'hidden',
             [
-                'type' => 'integer',
+                'type' => 'boolean',
                 'system' => true,
             ]
         );
 
-
-        $this->addCreatedDateAndLastUpdateFields();
-        $this->addCreatedDateAndLastUpdatedHook();
+        $this->addCreatedDateFieldAndHook();
+        $this->addLastUpdatedFieldAndHook();
 
         $this->hasOne(
             'setting_group_id',
             [
                 'model' => [SettingGroup::class],
-                'type' => 'integer',
                 'system' => true,
-                'ui' => ['form' => ['DropDown']]
             ]
         )
             ->addFields(
@@ -107,32 +99,26 @@ class Setting extends Model
         //system settings cannot be deleted
         $this->onHook(
             Model::HOOK_BEFORE_DELETE,
-            function (self $model) {
-                if ($model->get('system')) {
-                    throw new UserException(
-                        'Diese Einstellung ist eine Systemeinstellung und kann nicht gelöscht werden.'
-                    );
-                }
+            function (self $settingEntity) {
+                $settingEntity->assertNotSystem();
             }
         );
 
-        //ident of system setting cannot be edited if set
+        //ident cannot be changed once set
         $this->onHook(
             Model::HOOK_AFTER_LOAD,
-            function (self $model) {
-                if (
-                    $model->get('system')
-                    && $model->get('ident')
-                ) {
-                    $model->getField('ident')->read_only = true;
+            function (self $settingEntity) {
+                if ($settingEntity->get('ident')) {
+                    $settingEntity->getField('ident')->readOnly = true;
                 }
             }
+
         );
 
         $this->onHook(
             Model::HOOK_AFTER_LOAD,
-            function (self $model) {
-                $model->decryptValue();
+            function (self $settingEntity) {
+                $settingEntity->decryptValue();
             },
             [],
             1
@@ -140,17 +126,26 @@ class Setting extends Model
 
         $this->onHook(
             Model::HOOK_BEFORE_SAVE,
-            function (self $model) {
-                $model->encryptValue();
+            function (self $settingEntity) {
+                $settingEntity->encryptValue();
             },
             [],
             999
         );
     }
 
+    protected function assertNotSystem(): void
+    {
+        if ($this->get('system')) {
+            throw new Exception(
+                'This is a system setting and cannot be deleted.'
+            );
+        }
+    }
+
     protected function decryptValue(): void
     {
-        if ($this->get('encrypt_value') !== 1) {
+        if ($this->get('encrypt_value') !== true) {
             return;
         }
         $key = ENCRYPTFIELD_KEY;
@@ -171,13 +166,13 @@ class Setting extends Model
         $this->set('value', $plain);
     }
 
-    protected function encryptValue()
+    protected function encryptValue(): void
     {
-        if ($this->get('encrypt_value') === 0) {
+        if ($this->get('encrypt_value') !== true) {
             return;
         }
-        //sodium needs string
         $key = ENCRYPTFIELD_KEY;
+        //sodium needs string
         $value = (string)$this->get('value');
         $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $cipher = base64_encode($nonce . sodium_crypto_secretbox($value, $nonce, $key));

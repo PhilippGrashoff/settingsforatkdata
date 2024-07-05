@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace settingsforatk;
+namespace PhilippR\Atk4\Settings;
 
 use Atk4\Data\Model;
-use traitsforatkdata\CreatedDateAndLastUpdatedTrait;
+use PhilippR\Atk4\ModelTraits\CreatedDateAndLastUpdatedTrait;
 
 
 class SettingGroup extends Model
@@ -20,24 +20,30 @@ class SettingGroup extends Model
     {
         parent::init();
 
-        $this->addFields(
+        $this->addField(
+            'name',
             [
-                [
-                    'name',
-                    'type' => 'string'
-                ],
-                [
-                    'description',
-                    'type' => 'text',
-                    'caption' => 'Beschreibung'
-                ],
-                [
-                    'order',
-                    'type' => 'integer',
-                    'caption' => 'Sortierung'
-                ],
+                'type' => 'string'
             ]
         );
+
+        $this->addField(
+            'description',
+            [
+                'type' => 'text',
+                'caption' => 'Beschreibung'
+            ]
+        );
+
+        $this->addField(
+            'order',
+            [
+                'type' => 'integer',
+                'caption' => 'Sortierung'
+            ]
+        );
+
+        $this->setOrder('order');
 
         $this->addCreatedDateAndLastUpdateFields();
         $this->addCreatedDateAndLastUpdatedHook();

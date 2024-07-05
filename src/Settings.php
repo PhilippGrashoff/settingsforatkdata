@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
-namespace settingsforatk;
-
+namespace PhilippR\Atk4\Settings;
 
 use Atk4\Data\Exception;
 
-trait SettingsTrait
+class Settings
 {
 
-    protected $_settings = [];
-    protected $_settingsLoaded = false;
+    protected  array $_settings = [];
+    protected bool $_settingsLoaded = false;
 
     public function getSetting(string $ident)
     {
