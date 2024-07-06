@@ -2,23 +2,27 @@
 
 declare(strict_types=1);
 
-namespace settingsforatk\tests;
+namespace PhilippR\Atk4\Settings\Tests;
 
-use settingsforatk\Setting;
-use settingsforatk\SettingGroup;
-use traitsforatkdata\TestCase;
+use Atk4\Data\Persistence\Sql;
+use Atk4\Data\Schema\TestCase;
+use PhilippR\Atk4\Settings\Setting;
+use PhilippR\Atk4\Settings\SettingGroup;
 
 class SettingGroupTest extends TestCase
 {
-
-    protected $sqlitePersistenceModels = [
-        SettingGroup::class
-    ];
-
-    public function testInit()
+    protected function setUp(): void
     {
-        $settingGroup = new SettingGroup($this->getSqliteTestPersistence());
+        parent::setUp();
+        $this->db = new Sql('sqlite::memory:');
+        $this->createMigrator(new Setting($this->db))->create();
+        $this->createMigrator(new SettingGroup($this->db))->create();
+    }
+
+    public function testInit(): void
+    {
+        $settingGroup = (new SettingGroup($this->db))->createEntity();
         $settingGroup->save();
-        self::assertTrue($settingGroup->hasRef(Setting::class));
+        self::assertTrue($settingGroup->hasReference(Setting::class));
     }
 }

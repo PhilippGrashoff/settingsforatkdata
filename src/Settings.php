@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace PhilippR\Atk4\Settings;
 
-use Atk4\Core\Exception;
+use Atk4\Data\Exception;
 
 class Settings
 {
 
     protected static ?Settings $instance = null;
 
-    protected array $_settings = [];
-    protected bool $_settingsLoaded = false;
+    protected array $settings = [];
+    protected bool $settingsLoaded = false;
 
     public static function getInstance(): self
     {
@@ -38,32 +38,33 @@ class Settings
 
     /**
      * @param string $ident
-     * @return Setting|null
+     * @return Setting
      */
-    public function getSetting(string $ident): ?Setting
+    public function getSetting(string $ident): Setting
     {
-        $this->_loadSettings();
-
-        if (isset($this->_settings[$ident])) {
-            return $this->_settings[$ident];
+        $this->loadSettings();
+        if (!isset($this->settings[$ident])) {
+            throw new Exception('The setting "' . $ident . '" does not exist.');
         }
 
-        return null;
+        return $this->settings[$ident];
     }
 
     /**
+     * Loads all settings and stores the ident => value in $settings array
+     *
      * @return void
      */
-    protected function _loadSettings(): void
+    protected function loadSettings(): void
     {
-        if ($this->_settingsLoaded) {
+        if ($this->settingsLoaded) {
             return;
         }
-        $this->_settings = [];
+        $this->settings = [];
         foreach (new Setting($this->getPersistence()) as $setting) {
-            $this->_settings[$setting->get('ident')] = $setting->get('value');
+            $this->settings[$setting->get('ident')] = $setting->get('value');
         }
-        $this->_settingsLoaded = true;
+        $this->settingsLoaded = true;
     }
 
     /**
@@ -72,14 +73,14 @@ class Settings
      * @param string $startsWith
      * @return array
      */
-    public function getSettingsThatStartWith(string $startsWith): array
+    public function getSettingsIdentStartWith(string $startsWith): array
     {
         $return = [];
-        $this->_loadSettings();
+        $this->loadSettings();
 
-        foreach ($this->_settings as $key => $value) {
-            if (str_starts_with($key, $startsWith)) {
-                $return[$key] = $value;
+        foreach ($this->settings as $ident => $value) {
+            if (str_starts_with($ident, $startsWith)) {
+                $return[$ident] = $value;
             }
         }
         return $return;
@@ -91,8 +92,8 @@ class Settings
      */
     public function settingExists(string $ident): bool
     {
-        $this->_loadSettings();
-        return array_key_exists($ident, $this->_settings);
+        $this->loadSettings();
+        return array_key_exists($ident, $this->settings);
     }
 
     /**
@@ -103,7 +104,7 @@ class Settings
      */
     public function emptySettingsCache(): void
     {
-        $this->_settingsLoaded = false;
-        $this->_settings = [];
+        $this->settingsLoaded = false;
+        $this->settings = [];
     }
 }

@@ -2,16 +2,24 @@
 
 declare(strict_types=1);
 
-namespace settingsforatk\tests;
+namespace PhilippR\Atk4\Settings\Tests;
 
-use settingsforatk\Setting;
-use settingsforatk\SettingGroup;
-use settingsforatk\SettingInstaller;
-use traitsforatkdata\TestCase;
-
+use Atk4\Data\Persistence\Sql;
+use Atk4\Data\Schema\TestCase;
+use PhilippR\Atk4\Settings\Setting;
+use PhilippR\Atk4\Settings\SettingGroup;
+use PhilippR\Atk4\Settings\SettingInstaller;
 
 class SettingInstallerTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->db = new Sql('sqlite::memory:');
+        $this->createMigrator(new Setting($this->db))->create();
+        $this->createMigrator(new SettingGroup($this->db))->create();
+    }
+
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
@@ -20,37 +28,30 @@ class SettingInstallerTest extends TestCase
         }
     }
 
-    protected $sqlitePersistenceModels = [
-        Setting::class,
-        SettingGroup::class
-    ];
-
     public function testInstallNewSettingGroup()
     {
-        $persistence = $this->getSqliteTestPersistence();
-        $initialCount = (new SettingGroup($persistence))->action('count')->getOne();
-        $settingInstaller = new SettingInstaller($persistence);
+        $initialCount = (new SettingGroup($this->db))->action('count')->getOne();
+        $settingInstaller = new SettingInstaller($this->db);
         $settingInstaller->installSettingGroup('SomeSG', 'Blabla');
         self::assertEquals(
             $initialCount + 1,
-            (new SettingGroup($persistence))->action('count')->getOne()
+            (new SettingGroup($this->db))->action('count')->getOne()
         );
     }
 
     public function testExistigSettingGroupNotInstalledAgain()
     {
-        $persistence = $this->getSqliteTestPersistence();
-        $settingGroup = new SettingGroup($persistence);
+        $settingGroup = new SettingGroup($this->db);
         $settingGroup->set('name', 'a');
         $settingGroup->set('description', 'b');
         $settingGroup->save();
 
-        $initialCount = (new SettingGroup($persistence))->action('count')->getOne();
-        $settingInstaller = new SettingInstaller($persistence);
+        $initialCount = (new SettingGroup($this->db))->action('count')->getOne();
+        $settingInstaller = new SettingInstaller($this->db);
         $returnedSettingGroup = $settingInstaller->installSettingGroup('a', 'Blabla');
         self::assertSame(
             $initialCount,
-            (new SettingGroup($persistence))->action('count')->getOne()
+            (new SettingGroup($this->db))->action('count')->getOne()
         );
         self::assertSame(
             'b',
@@ -64,9 +65,8 @@ class SettingInstallerTest extends TestCase
 
     public function testInstallNewSettings()
     {
-        $persistence = $this->getSqliteTestPersistence();
-        $initialSettingCount = (new Setting($persistence))->action('count')->getOne();
-        $settingInstaller = new SettingInstaller($persistence);
+        $initialSettingCount = (new Setting($this->db))->action('count')->getOne();
+        $settingInstaller = new SettingInstaller($this->db);
         $settingsToInstall = [
             'SOMESETTING' => ['name' => 'lala', 'description' => 'blabla'],
             'SOMEOTHERSETTING' => ['name' => 'lulu', 'description' => 'blublub'],
@@ -74,27 +74,26 @@ class SettingInstallerTest extends TestCase
         $settingInstaller->installSettings($settingsToInstall);
         self::assertEquals(
             $initialSettingCount + 2,
-            (new Setting($persistence))->action('count')->getOne()
+            (new Setting($this->db))->action('count')->getOne()
         );
 
-        //installing again shoudn't change anything
+        //installing again shouldn't change anything
         $settingInstaller->installSettings($settingsToInstall);
         self::assertEquals(
             $initialSettingCount + 2,
-            (new Setting($persistence))->action('count')->getOne()
+            (new Setting($this->db))->action('count')->getOne()
         );
 
         //will throw exception if Setting does not exist
-        $setting = new Setting($persistence);
+        $setting = new Setting($this->db);
         $setting->loadBy('ident', 'SOMESETTING');
-        $setting = new Setting($persistence);
+        $setting = new Setting($this->db);
         $setting->loadBy('ident', 'SOMEOTHERSETTING');
     }
 
     public function testSettingGroupIsUsedOnInstallSettings()
     {
-        $persistence = $this->getSqliteTestPersistence();
-        $settingInstaller = new SettingInstaller($persistence);
+        $settingInstaller = new SettingInstaller($this->db);
         $settingGroup = $settingInstaller->installSettingGroup('SOMESG', 'LALA');
         $setting = $settingInstaller->installSetting(
             'SOMEMORE',
@@ -110,8 +109,7 @@ class SettingInstallerTest extends TestCase
 
     public function testStdValuesAreUsed()
     {
-        $persistence = $this->getSqliteTestPersistence();
-        $settingInstaller = new SettingInstaller($persistence);
+        $settingInstaller = new SettingInstaller($this->db);
         $settingInstaller->stdEncryptValue = 0;
         $settingInstaller->stdHidden = 0;
         $settingInstaller->stdSystem = 0;

@@ -38,8 +38,8 @@ class SettingGroup extends Model
 
         $this->setOrder('sort');
 
-        $this->addCreatedDateAndLastUpdateFields();
-        $this->addCreatedDateAndLastUpdatedHook();
+        $this->addCreatedDateFieldAndHook();
+        $this->addLastUpdatedFieldAndHook();
 
         $this->hasMany(Setting::class, ['model' => [Setting::class]]);
     }

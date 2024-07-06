@@ -2,18 +2,23 @@
 
 declare(strict_types=1);
 
-namespace settingsforatk\tests;
+namespace PhilippR\Atk4\Settings\Tests;
 
-use Atk4\Data\Exception;
-use settingsforatk\Setting;
-use settingsforatk\SettingGroup;
-use settingsforatk\tests\testclasses\SettingWithoutEncryption;
-use traitsforatkdata\TestCase;
-use traitsforatkdata\UserException;
-
+use Atk4\Data\Persistence\Sql;
+use Atk4\Data\Schema\TestCase;
+use PhilippR\Atk4\Settings\Setting;
+use PhilippR\Atk4\Settings\SettingGroup;
 
 class SettingTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->db = new Sql('sqlite::memory:');
+        $this->createMigrator(new Setting($this->db))->create();
+        $this->createMigrator(new SettingGroup($this->db))->create();
+    }
+
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
@@ -21,24 +26,19 @@ class SettingTest extends TestCase
             define('ENCRYPTFIELD_KEY', '12003456789abcdef123456789abcdef');
         }
     }
-
-    protected $sqlitePersistenceModels = [
-        Setting::class,
-        SettingGroup::class
-    ];
-
-    public function testSystemSettingNotDeletable()
+    
+    public function testSystemSettingNotDeletable(): void
     {
-        $setting = new Setting($this->getSqliteTestPersistence());
+        $setting = (new Setting($this->db))->createEntity();
         $setting->set('system', 1);
         $setting->save();
-        $this->expectException(UserException::class);
+        $this->expectExceptionMessage('This is a system setting and cannot be deleted.');
         $setting->delete();
     }
 
     public function testSystemSettingIdentNotEditable()
     {
-        $setting = new Setting($this->getSqliteTestPersistence());
+        $setting = (new Setting($this->db))->createEntity();
         $setting->set('system', 1);
         $setting->set('ident', 'SOMEIDENT');
         $setting->save();
@@ -48,15 +48,14 @@ class SettingTest extends TestCase
 
     public function testOptionalEncryption()
     {
-        $persistence = $this->getSqliteTestPersistence();
-        $setting = new Setting($persistence);
+        $setting = (new Setting($this->db))->createEntity();
         $setting->set('system', 1);
         $setting->set('ident', 'SOMEIDENT');
         $setting->set('value', 'Bla');
         $setting->set('encrypt_value', 0);
         $setting->save();
 
-        $withoutEncrpytion = new SettingWithoutEncryption($persistence);
+        $withoutEncrpytion = new SettingWithoutEncryption($this->db);
         $withoutEncrpytion->load($setting->get('id'));
         self::assertSame(
             $setting->get('value'),
