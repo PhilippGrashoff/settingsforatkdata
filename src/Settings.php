@@ -4,15 +4,43 @@ declare(strict_types=1);
 
 namespace PhilippR\Atk4\Settings;
 
-use Atk4\Data\Exception;
+use Atk4\Core\Exception;
 
 class Settings
 {
 
-    protected  array $_settings = [];
+    protected static ?Settings $instance = null;
+
+    protected array $_settings = [];
     protected bool $_settingsLoaded = false;
 
-    public function getSetting(string $ident)
+    public static function getInstance(): self
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+
+        return self::$instance;
+    }
+
+    protected function __construct()
+    {
+    }
+
+    protected function __clone()
+    {
+    }
+
+    public function __wakeup()
+    {
+        throw new Exception("Cannot unserialize singleton");
+    }
+
+    /**
+     * @param string $ident
+     * @return Setting|null
+     */
+    public function getSetting(string $ident): ?Setting
     {
         $this->_loadSettings();
 
@@ -23,34 +51,44 @@ class Settings
         return null;
     }
 
+    /**
+     * @return void
+     */
     protected function _loadSettings(): void
     {
         if ($this->_settingsLoaded) {
             return;
         }
         $this->_settings = [];
-        foreach (new Setting(isset($this->db) ? $this->db : $this->persistence) as $setting) {
+        foreach (new Setting($this->getPersistence()) as $setting) {
             $this->_settings[$setting->get('ident')] = $setting->get('value');
         }
         $this->_settingsLoaded = true;
     }
 
     /**
-     * returns all STD_ settings, which are typically used in templates
+     * returns all settings where the ident starts with the given string
+     *
+     * @param string $startsWith
+     * @return array
      */
-    public function getAllSTDSettings(): array
+    public function getSettingsThatStartWith(string $startsWith): array
     {
         $return = [];
         $this->_loadSettings();
 
         foreach ($this->_settings as $key => $value) {
-            if (substr($key, 0, 4) == 'STD_') {
+            if (str_starts_with($key, $startsWith)) {
                 $return[$key] = $value;
             }
         }
         return $return;
     }
 
+    /**
+     * @param string $ident
+     * @return bool
+     */
     public function settingExists(string $ident): bool
     {
         $this->_loadSettings();
@@ -58,36 +96,14 @@ class Settings
     }
 
     /**
-     * For "installers": Add a setting if it does not exist yet
+     * Forces reload of settings on next setting loading. Is called from Setting hooks to ensure the setting cache is
+     * never outdated.
+     *
+     * @return void
      */
-    public function addSetting(string $ident, $value): void
+    public function emptySettingsCache(): void
     {
-        $this->_loadSettings();
-        if (!array_key_exists($ident, $this->_settings)) {
-            $setting = new Setting(isset($this->db) ? $this->db : $this->persistence);
-            $setting->set('ident', $ident);
-            $setting->set('value', $value);
-            $setting->save();
-            $this->_settingsLoaded = false;
-        }
-    }
-
-    public function updateSetting(string $ident, $value): Setting {
-        $this->_loadSettings();
-        if (!array_key_exists($ident, $this->_settings)) {
-            throw new Exception('Setting ' . $ident . ' not found!');
-        }
-
-        $setting = new Setting(isset($this->db) ? $this->db : $this->persistence);
-        $setting->loadBy('ident', $ident);
-        $setting->set('value', $value);
-        $setting->save();
         $this->_settingsLoaded = false;
-
-        return $setting;
-    }
-
-    public function reloadSettings(): void {
-        $this->_settingsLoaded = false;
+        $this->_settings = [];
     }
 }

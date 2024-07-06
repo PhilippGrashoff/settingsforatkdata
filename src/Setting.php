@@ -20,20 +20,18 @@ class Setting extends Model
     protected function init(): void
     {
         parent::init();
+        $this->addModelFields();
+        $this->addCreatedDateFieldAndHook();
+        $this->addLastUpdatedFieldAndHook();
+        $this->addReferences();
+        $this->addHooks();
+    }
 
-        $this->addField(
-            'ident',
-            [
-                'type' => 'string',
-            ]
-        );
+    protected function addModelFields(): void
+    {
+        $this->addField('ident');
 
-        $this->addField(
-            'name',
-            [
-                'type' => 'string'
-            ]
-        );
+        $this->addField('name');
 
         $this->addField(
             'description',
@@ -74,10 +72,10 @@ class Setting extends Model
                 'system' => true,
             ]
         );
+    }
 
-        $this->addCreatedDateFieldAndHook();
-        $this->addLastUpdatedFieldAndHook();
-
+    protected function addReferences(): void
+    {
         $this->hasOne(
             'setting_group_id',
             [
@@ -85,17 +83,11 @@ class Setting extends Model
                 'system' => true,
             ]
         )
-            ->addFields(
-                [
-                    'setting_group_name' =>
-                        [
-                            'name',
-                            'type' => 'string',
-                            'system' => true
-                        ]
-                ]
-            );
+            ->addField('setting_group_name', 'name');
+    }
 
+    protected function addHooks(): void
+    {
         //system settings cannot be deleted
         $this->onHook(
             Model::HOOK_BEFORE_DELETE,
@@ -115,6 +107,7 @@ class Setting extends Model
 
         );
 
+        //decrypt value in case it was stored encrypted
         $this->onHook(
             Model::HOOK_AFTER_LOAD,
             function (self $settingEntity) {
@@ -124,6 +117,8 @@ class Setting extends Model
             1
         );
 
+
+        //encrypt value last thing before saving in case it shall be stored encrypted
         $this->onHook(
             Model::HOOK_BEFORE_SAVE,
             function (self $settingEntity) {
@@ -131,6 +126,22 @@ class Setting extends Model
             },
             [],
             999
+        );
+
+        //invalidate Settings cache after a setting was deleted
+        $this->onHook(
+            Model::HOOK_AFTER_DELETE,
+            function (self $settingEntity) {
+                Settings::getInstance()->emptySettingsCache();
+            }
+        );
+
+        //invalidate Settings cache after a setting was created/updated
+        $this->onHook(
+            Model::HOOK_AFTER_SAVE,
+            function (self $settingEntity) {
+                Settings::getInstance()->emptySettingsCache();
+            }
         );
     }
 
@@ -148,7 +159,7 @@ class Setting extends Model
         if ($this->get('encrypt_value') !== true) {
             return;
         }
-        $key = ENCRYPTFIELD_KEY;
+        $key = $this->getEncryptionKey();
         $decoded = base64_decode((string)$this->get('value'));
         if (mb_strlen($decoded, '8bit') < (SODIUM_CRYPTO_SECRETBOX_NONCEBYTES + SODIUM_CRYPTO_SECRETBOX_MACBYTES)) {
             throw new Exception('An error occurred decrypting the field value');  //@codeCoverageIgnore
@@ -171,7 +182,7 @@ class Setting extends Model
         if ($this->get('encrypt_value') !== true) {
             return;
         }
-        $key = ENCRYPTFIELD_KEY;
+        $key = $this->getEncryptionKey();
         //sodium needs string
         $value = (string)$this->get('value');
         $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
@@ -179,5 +190,10 @@ class Setting extends Model
         sodium_memzero($value);
         sodium_memzero($key);
         $this->set('value', $cipher);
+    }
+
+    //extend this method to get the encryption/decryption key according to your needs
+    protected function getEncryptionKey(): string {
+        return ENCRYPTFIELD_KEY;
     }
 }

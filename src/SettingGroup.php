@@ -20,30 +20,23 @@ class SettingGroup extends Model
     {
         parent::init();
 
-        $this->addField(
-            'name',
-            [
-                'type' => 'string'
-            ]
-        );
+        $this->addField('name');
 
         $this->addField(
             'description',
             [
                 'type' => 'text',
-                'caption' => 'Beschreibung'
             ]
         );
 
         $this->addField(
-            'order',
+            'sort',
             [
                 'type' => 'integer',
-                'caption' => 'Sortierung'
             ]
         );
 
-        $this->setOrder('order');
+        $this->setOrder('sort');
 
         $this->addCreatedDateAndLastUpdateFields();
         $this->addCreatedDateAndLastUpdatedHook();

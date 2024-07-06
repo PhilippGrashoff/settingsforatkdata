@@ -18,11 +18,21 @@ class SettingInstaller
     protected int $stdHidden = 0;
 
 
+    /**
+     * @param Persistence $persistence
+     */
     public function __construct(Persistence $persistence)
     {
         $this->persistence = $persistence;
     }
 
+    /**
+     * @param string $name
+     * @param string $description
+     * @return SettingGroup
+     * @throws \Atk4\Core\Exception
+     * @throws \Atk4\Data\Exception
+     */
     public function installSettingGroup(string $name, string $description): SettingGroup
     {
         $settingGroup = new SettingGroup($this->persistence);
@@ -37,6 +47,11 @@ class SettingInstaller
         return $settingGroup;
     }
 
+    /**
+     * @param array $settings
+     * @param SettingGroup|null $settingGroup
+     * @return void
+     */
     public function installSettings(array $settings, SettingGroup $settingGroup = null): void
     {
         foreach ($settings as $settingIdent => $values) {
@@ -44,6 +59,14 @@ class SettingInstaller
         }
     }
 
+    /**
+     * @param string $settingIdent
+     * @param array $values
+     * @param SettingGroup|null $settingGroup
+     * @return Setting
+     * @throws \Atk4\Core\Exception
+     * @throws \Atk4\Data\Exception
+     */
     public function installSetting(string $settingIdent, array $values, SettingGroup $settingGroup = null): Setting
     {
         $setting = new Setting($this->persistence);
